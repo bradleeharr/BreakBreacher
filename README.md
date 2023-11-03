@@ -1,6 +1,8 @@
 # BreakBreacher
 
-Welcome to BreakBreacher, an innovative game where traditional gameplay meets meta-level interaction with windows, powered by SFML (Simple and Fast Multimedia Library). Prepare for a unique experience that transcends the boundaries of your screen!
+![ezgif-3-afe59fccfa](https://github.com/bradleeharr/BreakBreacher/assets/56418392/e70531a3-b4b7-44c4-9bc7-ce001ebf6335)
+
+Welcome to BreakBreacher, a small WIP game project using meta-level interaction with windows, powered by SFML (Simple and Fast Multimedia Library). A unique experience that transcends the boundaries of your screen!
 
 ## Getting Started
 
