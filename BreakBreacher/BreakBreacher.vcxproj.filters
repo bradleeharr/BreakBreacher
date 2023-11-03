@@ -32,4 +32,12 @@
     <None Include="sfml-system-d-2.dll" />
     <None Include="sfml-window-2.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="BuchAssets\attribution.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\Downloads\player.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
