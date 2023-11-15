@@ -6,9 +6,6 @@
 Welcome to BreakBreacher, a small WIP game project using meta-level interaction with windows, powered by SFML (Simple and Fast Multimedia Library). A unique experience that transcends the boundaries of your screen!
 
 ## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
 ### Prerequisites
 
 Before you begin, ensure you have the following installed:
