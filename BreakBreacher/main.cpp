@@ -65,10 +65,18 @@ private:
     const float playerSpeed = 200.f; 
 };
 
-void resizeWindow(HWND hwnd, float l, float r, float t, float b) {
+void resizeWindow(HWND hwnd, float l, float r, float u, float d) {
     RECT rect;
+    int dw = r + l;
+    int dh = u + d;
     GetWindowRect(hwnd, &rect); 
-    SetWindowPos(hwnd, NULL, rect.left - l, rect.top - t, rect.right - rect.left - r, rect.bottom - rect.top - b, SWP_NOZORDER | SWP_NOACTIVATE);
+    printf("Left %d", rect.left);
+    printf("Right %d", rect.right);
+    printf("Top %d", rect.top);
+    printf("Bottom %d", rect.bottom);
+    int width = rect.right - rect.left + dw;
+    int height = rect.bottom - rect.top + dh;
+    SetWindowPos(hwnd, NULL, rect.left-l, rect.top-u, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 
@@ -123,31 +131,31 @@ int main() {
             GetWindowRect(hwnd, &rect); 
 
             if (bullet_pos.x < 0) {
-                printf("Bullet on Left");
+                printf("Bullet on Left\n");
                 bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0.1, 0, 0, 0);
-            }
-            if (bullet_pos.y < 0) {
-                printf("Bullet on Top");
-                bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, 0, 0.1, 0);
+                resizeWindow(hwnd, 1, 0, 0, 0);
             }
             if (bullet_pos.x > rect.right - rect.left) {
-                printf("Bullet on Right");
+                printf("Bullet on Right\n");
                 bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, -0.1, 0, 0);
+                resizeWindow(hwnd, 0, 1, 0, 0);
+            }
+            if (bullet_pos.y < 0) {
+                printf("Bullet on Top\n");
+                bullets.erase(bullets.begin() + i);
+                resizeWindow(hwnd, 0, 0, 1, 0);
             }
             if (bullet_pos.y > rect.bottom - rect.top) {
-                printf("Bullet on Bottom");
+                printf("Bullet on Bottom\n");
                 bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, 0, 0, -0.1);
+                resizeWindow(hwnd, 0, 0, 0, 1);
             }
             else {
                 ++i;
             }
         }
         float dz = 1.;
-        resizeWindow(hwnd, 0, 0, 0, 0);
+        //resizeWindow(hwnd, 0, 0, 0, 0);
         for (Bullet& b : bullets) {
             b.draw(window);
         } 
