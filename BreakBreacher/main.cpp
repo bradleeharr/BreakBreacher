@@ -11,6 +11,11 @@ public:
         sprite.setOrigin(texture.getSize().x / 2.f, texture.getSize().y / 2.f);
     }
 
+    void move(sf::Vector2f& movement) {
+        sprite.move(movement);
+
+    }
+
     void handleInput(const sf::Time& deltaTime) {
         sf::Vector2f movement(0.f, 0.f);
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
@@ -21,10 +26,10 @@ public:
             movement.y += playerSpeed * deltaTime.asSeconds();
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
             movement.x += playerSpeed * deltaTime.asSeconds();
-        sprite.move(movement);
+        move(movement);
     }
-    float BULLET_RADIUS = 5.f;
-    float BULLET_SPEED = 200.f;
+    float BULLET_RADIUS = 10.f;
+    float BULLET_SPEED = 400.f;
     void shoot(std::vector<Bullet>& bullets) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
             sf::Vector2f pos(sprite.getPosition().x, sprite.getPosition().y - sprite.getGlobalBounds().height / 2 - BULLET_RADIUS);
@@ -65,37 +70,127 @@ private:
     const float playerSpeed = 200.f; 
 };
 
-void resizeWindow(HWND hwnd, float l, float r, float u, float d) {
+void resizeWindow(sf::RenderWindow& window, HWND hwnd, float l, float r, float u, float d) {
     RECT rect;
     int dw = r + l;
     int dh = u + d;
     GetWindowRect(hwnd, &rect); 
-    printf("Left %d", rect.left);
-    printf("Right %d", rect.right);
-    printf("Top %d", rect.top);
-    printf("Bottom %d", rect.bottom);
-    int width = rect.right - rect.left + dw;
-    int height = rect.bottom - rect.top + dh;
-    SetWindowPos(hwnd, NULL, rect.left-l, rect.top-u, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+    printf("Left %d\n", rect.left);
+    printf("Right %d\n", rect.right);
+    printf("Top %d\n", rect.top);
+    printf("Bottom %d\n", rect.bottom);
+    int newWidth = rect.right - rect.left + dw;
+    int newHeight = rect.bottom - rect.top + dh;
+    SetWindowPos(hwnd, NULL, rect.left-l, rect.top-u, newWidth, newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+    sf::View view = sf::View();
+    view.setSize(newWidth, newHeight);
+    window.setView(view);
 }
 
+void handleBulletBoundaries(sf::RenderWindow& window, HWND hwnd, std::vector<Bullet>& bullets, sf::Time deltaTime) {
+    for (size_t i = 0; i < bullets.size();) {
+        bullets[i].update(deltaTime);
+        sf::Vector2f bullet_pos = bullets[i].getPosition();
+        RECT rect;
+        GetWindowRect(hwnd, &rect);
+        int l = 0, r = 0, t = 0, b = 0;
+        if (bullet_pos.x < 0) {
+            printf("Bullet on Left\n");
+            bullets.erase(bullets.begin() + i);
+            l = 1;
+        }
+        else if (bullet_pos.x > rect.right - rect.left) {
+            printf("Bullet on Right\n");
+            bullets.erase(bullets.begin() + i);
+            r = 1;
+        }
+        else if (bullet_pos.y < 0) {
+            printf("Bullet on Top\n");
+            bullets.erase(bullets.begin() + i);
+            t = 1;
+        }
+        else if (bullet_pos.y > rect.bottom - rect.top) {
+            printf("Bullet on Bottom\n");
+            bullets.erase(bullets.begin() + i);
+            b = 1;
+        }
+        else {
+            ++i;
+        }
+        resizeWindow(window, hwnd, l, r, t, b);
+    }
+}
 
-int main() {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Plus Shaped Content");
-    sf::Vector2u windowSize = window.getSize();
+std::pair<sf::RectangleShape, sf::RectangleShape> drawCross(sf::Vector2u windowSize) {
     sf::RectangleShape verticalBar(sf::Vector2f(100, 300)); // width, height
     sf::RectangleShape horizontalBar(sf::Vector2f(300, 100)); // width, height
     // Set the origin of the bars to the center of each rectangle
     verticalBar.setOrigin(50, 150); // half of width, half of height
     horizontalBar.setOrigin(150, 50); // half of width, half of height
     // Position the bars to the center of the window
-    verticalBar.setPosition(window.getSize().x / 2, window.getSize().y / 2);
-    horizontalBar.setPosition(window.getSize().x / 2, window.getSize().y / 2);
+    verticalBar.setPosition(windowSize.x / 2, windowSize.y / 2);
+    horizontalBar.setPosition(windowSize.x / 2, windowSize.y / 2);
     // Set fill colors (or textures)
     verticalBar.setFillColor(sf::Color::Green);
     horizontalBar.setFillColor(sf::Color::Green);
 
+    return std::make_pair(verticalBar, horizontalBar);
+}
+
+void drawGrid(sf::RenderWindow& window, int gridSize) {
+    int windowWidth = window.getSize().x;
+    int windowHeight = window.getSize().y;
+
+    sf::RectangleShape line;
+    line.setFillColor(sf::Color(128, 128, 128)); // Gray color
+
+    // Draw vertical lines
+    for (int x = 0; x <= windowWidth; x += gridSize) {
+        line.setSize(sf::Vector2f(1, windowHeight));
+        line.setPosition(x, 0);
+        window.draw(line);
+    }
+
+    // Draw horizontal lines
+    for (int y = 0; y <= windowHeight; y += gridSize) {
+        line.setSize(sf::Vector2f(windowWidth, 1));
+        line.setPosition(0, y);
+        window.draw(line);
+    }
+}
+
+void displayCoordinates(sf::RenderWindow& window, sf::Font& font, int gridSize) {
+    sf::Text text;
+    text.setFont(font);
+    text.setCharacterSize(12); // Choose an appropriate size
+    text.setFillColor(sf::Color::Black);
+
+    int windowWidth = window.getSize().x;
+    int windowHeight = window.getSize().y;
+
+    for (int x = 0; x <= windowWidth; x += gridSize) {
+        for (int y = 0; y <= windowHeight; y += gridSize) {
+            text.setString(std::to_string(x) + "," + std::to_string(y));
+            text.setPosition(x + 5, y); // Offset a bit for visibility
+            window.draw(text);
+        }
+    }
+}
+int main() {
+    int gridSize = 50; 
+    
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Plus Shaped Content. Now with Coordinates");
+    sf::Vector2u windowSize = window.getSize();
     sf::Texture playerTexture;
+
+    std::pair<sf::RectangleShape, sf::RectangleShape> pair = drawCross(windowSize);
+    auto verticalBar = pair.first;
+    auto horizontalBar = pair.second;
+
+    sf::Font font;
+    if (!font.loadFromFile("path/to/font.ttf")) {
+        // Handle error
+    }
     if (!playerTexture.loadFromFile("player.png")) {
         return -1;
     }
@@ -113,52 +208,22 @@ int main() {
                 window.close();
         }
 
-        window.clear(sf::Color::Blue); 
 
+        handleBulletBoundaries(window, hwnd, bullets, deltaTime);
+        float dz = 1.;
+        //resizeWindow(hwnd, 0, 0, 0, 0);
+        window.clear(sf::Color::Blue); 
+        drawGrid(window, gridSize);
+        displayCoordinates(window, font, gridSize);
         window.draw(verticalBar);
         window.draw(horizontalBar);
         player.draw(window);
         player.shoot(bullets);
         player.handleInput(deltaTime);
-
-        for (size_t i = 0; i < bullets.size();) {
-            bullets[i].update(deltaTime);
-
-
-
-            sf::Vector2f bullet_pos = bullets[i].getPosition();
-            RECT rect;
-            GetWindowRect(hwnd, &rect); 
-
-            if (bullet_pos.x < 0) {
-                printf("Bullet on Left\n");
-                bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 1, 0, 0, 0);
-            }
-            if (bullet_pos.x > rect.right - rect.left) {
-                printf("Bullet on Right\n");
-                bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, 1, 0, 0);
-            }
-            if (bullet_pos.y < 0) {
-                printf("Bullet on Top\n");
-                bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, 0, 1, 0);
-            }
-            if (bullet_pos.y > rect.bottom - rect.top) {
-                printf("Bullet on Bottom\n");
-                bullets.erase(bullets.begin() + i);
-                resizeWindow(hwnd, 0, 0, 0, 1);
-            }
-            else {
-                ++i;
-            }
-        }
-        float dz = 1.;
-        //resizeWindow(hwnd, 0, 0, 0, 0);
         for (Bullet& b : bullets) {
             b.draw(window);
         } 
+
         window.display();
     }
 
